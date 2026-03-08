@@ -93,13 +93,17 @@ def fetch_weather(pref):
     url = (
         f"https://api.open-meteo.com/v1/forecast"
         f"?latitude={pref['lat']}&longitude={pref['lon']}"
-        f"&daily=weathercode&timezone=Asia%2FTokyo&forecast_days=1"
+        f"&daily=weathercode,temperature_2m_max,temperature_2m_min"
+        f"&timezone=Asia%2FTokyo&forecast_days=1"
     )
     with urllib.request.urlopen(url, timeout=10) as res:
         data = json.loads(res.read())
     code = data["daily"]["weathercode"][0]
+    temp_max = data["daily"]["temperature_2m_max"][0]
+    temp_min = data["daily"]["temperature_2m_min"][0]
     label, emoji = WMO_CODES.get(code, ("不明", "❓"))
-    return {**pref, "code": code, "label": label, "emoji": emoji}
+    return {**pref, "code": code, "label": label, "emoji": emoji,
+            "temp_max": temp_max, "temp_min": temp_min}
 
 
 def build_message(weather_list):
@@ -121,7 +125,7 @@ def build_message(weather_list):
     for region, prefs in regions.items():
         lines.append(f"*【{region}】*")
         for p in prefs:
-            lines.append(f"{p['emoji']} {p['name']}：{p['label']}")
+            lines.append(f"{p['emoji']} {p['name']}：{p['label']}　🌡️ 最高 {p['temp_max']:.1f}℃ / 最低 {p['temp_min']:.1f}℃")
         lines.append("")
 
     lines.append("_powered by Open-Meteo_")
